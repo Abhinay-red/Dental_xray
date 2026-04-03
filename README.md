@@ -85,6 +85,6 @@ dental-ai/
     └── index.html           # Web interface
 
 ```
-Author
+## Author
 
 Abhinay Reddy
