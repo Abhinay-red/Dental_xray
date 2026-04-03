@@ -4,10 +4,10 @@ An AI-powered dental radiograph analysis system that uses EfficientNet deep lear
 
 ## Features
 
-- 🦷 Dental radiograph upload and analysis
-- 🤖 EfficientNet-based deep learning model
-- 📊 Automated report generation
-- 🖥️ Modern web interface
+-  Dental radiograph upload and analysis
+-  EfficientNet-based deep learning model
+-  Automated report generation
+-  Modern web interface
 
 ## Technology Stack
 
