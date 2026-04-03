@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Dental Radiograph Analysis System</title>
+<style>
+  /* ── Reset & base ──────────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary:   #1565C0;
+    --primary-l: #1976D2;
+    --secondary: #0288D1;
+    --success:   #2E7D32;
+    --warning:   #E65100;
+    --danger:    #C62828;
+    --bg:        #0D1117;
+    --bg2:       #161B22;
+    --bg3:       #21262D;
+    --border:    #30363D;
+    --text:      #E6EDF3;
+    --text-dim:  #8B949E;
+    --radius:    10px;
+    --shadow:    0 4px 24px rgba(0,0,0,.45);
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* ── Header ────────────────────────────────────────────────────────────── */
+  header {
+    background: linear-gradient(135deg, #0D1B2A 0%, #1A237E 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+  .logo {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+  }
+  header h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -.3px; }
+  header p  { font-size: .8rem; color: var(--text-dim); }
+  .badge {
+    margin-left: auto;
+    background: rgba(255,255,255,.07);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: .75rem;
+    color: var(--text-dim);
+  }
+
+  /* ── Main layout ───────────────────────────────────────────────────────── */
+  main { max-width: 1280px; margin: 0 auto; padding: 32px 24px; }
+
+  /* ── Upload zone ───────────────────────────────────────────────────────── */
+  #upload-section { margin-bottom: 32px; }
+
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 56px 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .25s;
+    background: var(--bg2);
+    position: relative;
+  }
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--primary-l);
+    background: rgba(25,118,210,.07);
+  }
+  .drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .drop-zone .icon { font-size: 3rem; margin-bottom: 12px; }
+  .drop-zone h2 { font-size: 1.15rem; margin-bottom: 6px; }
+  .drop-zone p  { font-size: .85rem; color: var(--text-dim); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-size: .9rem; font-weight: 600;
+    cursor: pointer; border: none;
+    transition: all .2s;
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: var(--primary); color: #fff;
+  }
+  .btn-primary:hover { background: var(--primary-l); transform: translateY(-1px); }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-outline:hover { background: var(--bg3); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; transform: none !important; }
+
+  /* ── Progress ──────────────────────────────────────────────────────────── */
+  #progress-section { display: none; }
+  .progress-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    text-align: center;
+  }
+  .spinner {
+    width: 56px; height: 56px;
+    border: 4px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .progress-steps { display: flex; justify-content: center; gap: 24px; margin-top: 20px; flex-wrap: wrap; }
+  .step { display: flex; align-items: center; gap: 8px; font-size: .85rem; color: var(--text-dim); }
+  .step.active { color: var(--primary-l); }
+  .step.done   { color: var(--success); }
+  .step-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--border);
+  }
+  .step.active .step-dot { background: var(--primary); animation: pulse 1s infinite; }
+  .step.done   .step-dot { background: var(--success); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* ── Results ───────────────────────────────────────────────────────────── */
+  #results-section { display: none; }
+
+  .section-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px; flex-wrap: wrap; gap: 12px;
+  }
+  .section-head h2 { font-size: 1.1rem; font-weight: 700; }
+
+  /* Summary cards */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+  }
+  .card .label { font-size: .75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; }
+  .card .value { font-size: 2rem; font-weight: 700; margin: 4px 0; }
+  .card .sub   { font-size: .78rem; color: var(--text-dim); }
+  .card.danger  { border-color: var(--danger); }
+  .card.warning { border-color: var(--warning); }
+  .card.success { border-color: var(--success); }
+
+  /* Image grid */
+  .img-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  @media(max-width:700px){ .img-grid { grid-template-columns: 1fr; } }
+  .img-panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .img-panel .img-label {
+    padding: 10px 14px;
+    font-size: .8rem; font-weight: 600;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .img-panel img { width: 100%; display: block; }
+
+  /* FDI chart panel */
+  .fdi-panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .fdi-panel .img-label {
+    padding: 10px 14px;
+    font-size: .8rem; font-weight: 600;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+  }
+  .fdi-panel img { width: 100%; display: block; }
+
+  /* Legend */
+  .legend {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 8px 16px;
+    margin-bottom: 24px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 8px;
+    font-size: .78rem; color: var(--text-dim);
+    white-space: nowrap;
+  }
+  .legend-dot {
+    width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0;
+  }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tab {
+    padding: 7px 16px;
+    border-radius: 6px;
+    font-size: .85rem; font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    color: var(--text-dim);
+    transition: all .2s;
+  }
+  .tab.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Tables */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .84rem;
+    background: var(--bg2);
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .data-table th {
+    background: var(--bg3);
+    padding: 10px 14px;
+    text-align: left;
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+  }
+  .data-table td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: rgba(255,255,255,.025); }
+
+  /* Pills */
+  .pill {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-size: .74rem; font-weight: 600;
+    text-transform: capitalize;
+  }
+  .pill-normal   { background: #1B5E2033; color: #66BB6A; border: 1px solid #2E7D32; }
+  .pill-cavity   { background: #E65100 22; color: #FFA726; border: 1px solid #E65100; }
+  .pill-filling  { background: #0D47A133; color: #42A5F5; border: 1px solid #1565C0; }
+  .pill-implant  { background: #00838F33; color: #26C6DA; border: 1px solid #00838F; }
+  .pill-crown    { background: #6A1B9A33; color: #CE93D8; border: 1px solid #6A1B9A; }
+  .pill-root_canal { background: #F9A82533; color: #FFD54F; border: 1px solid #F9A825; }
+  .pill-fractured,
+  .pill-periapical_lesion { background: #B71C1C33; color: #EF9A9A; border: 1px solid #C62828; }
+  .pill-missing  { background: #37474F33; color: #90A4AE; border: 1px solid #546E7A; }
+  .pill-impacted { background: #E65100 22; color: #FFCC80; border: 1px solid #F57C00; }
+  .pill-default  { background: var(--bg3); color: var(--text-dim); border: 1px solid var(--border); }
+
+  .pill-present { background: #1B5E2022; color: #66BB6A; border: 1px solid #2E7D32; }
+  .pill-missing2{ background: #37474F33; color: #90A4AE; border: 1px solid #546E7A; }
+
+  .severity-mild     { color: #FFA726; }
+  .severity-moderate { color: #FF7043; }
+  .severity-severe   { color: #EF5350; }
+
+  /* Anomaly cards */
+  .anomaly-list { display: flex; flex-direction: column; gap: 10px; }
+  .anomaly-card {
+    background: var(--bg2);
+    border: 1px solid var(--danger);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .anomaly-card .an-head {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+  }
+  .anomaly-card .an-type { font-weight: 700; text-transform: capitalize; }
+  .anomaly-card .an-location { font-size: .82rem; color: var(--text-dim); }
+  .anomaly-card .an-desc { font-size: .85rem; color: var(--text); }
+
+  /* Recommendations */
+  .rec-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .rec-list li {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--primary);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: .87rem;
+  }
+
+  /* Assessment block */
+  .assessment-block {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    font-size: .9rem;
+    line-height: 1.7;
+    margin-bottom: 16px;
+  }
+
+  /* Urgency badge */
+  .urgency-routine { background: #1B5E2033; color: #66BB6A; border: 1px solid #2E7D32; }
+  .urgency-soon    { background: #E6510022; color: #FFA726; border: 1px solid #E65100; }
+  .urgency-urgent  { background: #B71C1C33; color: #EF9A9A; border: 1px solid #C62828; }
+
+  /* Error */
+  .error-box {
+    background: #B71C1C22;
+    border: 1px solid var(--danger);
+    border-radius: var(--radius);
+    padding: 18px 22px;
+    display: none;
+    margin-bottom: 20px;
+  }
+  .error-box h3 { color: #EF9A9A; margin-bottom: 4px; }
+  .error-box p  { font-size: .88rem; color: var(--text-dim); }
+
+  /* Scrollable table wrapper */
+  .table-wrap { overflow-x: auto; border-radius: var(--radius); }
+
+  /* ── FDI HTML Chart ───────────────────────────────────────────────────── */
+  .fdi-chart-wrap {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .fdi-chart-title {
+    padding: 10px 14px;
+    font-size: .8rem; font-weight: 600;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .fdi-chart-body {
+    padding: 16px 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .fdi-row-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .fdi-jaw-label {
+    width: 64px;
+    flex-shrink: 0;
+    text-align: center;
+    font-size: .7rem;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: .5px;
+    line-height: 1.3;
+    text-transform: uppercase;
+  }
+  .fdi-teeth-row {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(16, 1fr);
+    gap: 3px;
+  }
+  .fdi-tooth {
+    border-radius: 5px;
+    padding: 8px 2px 6px;
+    text-align: center;
+    font-size: .72rem;
+    font-weight: 700;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,.12);
+    cursor: default;
+    transition: transform .15s, box-shadow .15s;
+    min-height: 52px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .fdi-tooth:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,.5);
+    z-index: 2;
+    position: relative;
+  }
+  .fdi-midline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 6px 0;
+  }
+  .fdi-midline-label {
+    width: 64px; flex-shrink: 0;
+  }
+  .fdi-midline-line {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    position: relative;
+  }
+  .fdi-midline-line::before {
+    content: '';
+    position: absolute;
+    left: 0; right: 0; top: 50%;
+    border-top: 1px dashed #30363D;
+  }
+  .fdi-midline-sections {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    font-size: .68rem;
+    color: #484f58;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+  .fdi-midline-sections span {
+    background: var(--bg2);
+    padding: 0 6px;
+  }
+  .fdi-center-divider {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 50%;
+    border-left: 1px dashed #30363D;
+  }
+
+  /* ── Footer ────────────────────────────────────────────────────────────── */
+  footer {
+    text-align: center;
+    padding: 24px;
+    font-size: .78rem;
+    color: var(--text-dim);
+    border-top: 1px solid var(--border);
+    margin-top: 48px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────────────────── -->
+<header>
+  <div class="logo">🦷</div>
+  <div>
+    <h1>AI Dental Radiograph Analysis</h1>
+    <p>Panoramic OPG · FDI Tooth Numbering · AI-Powered Analysis</p>
+  </div>
+</header>
+
+<!-- ── Main ────────────────────────────────────────────────────────────────── -->
+<main>
+
+  <!-- Upload -->
+  <section id="upload-section">
+    <div class="section-head">
+      <div>
+        <h2 style="font-size:1.3rem;margin-bottom:4px">Upload Panoramic X-Ray (OPG)</h2>
+        <p style="color:var(--text-dim);font-size:.88rem">JPEG · PNG · WebP supported · Max 20 MB</p>
+      </div>
+    </div>
+
+    <div class="drop-zone" id="drop-zone">
+      <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp" />
+      <div class="icon">🩻</div>
+      <h2>Drag & drop your X-ray here</h2>
+      <p>or click to browse files</p>
+      <br/>
+      <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">
+        📂 Choose File
+      </button>
+    </div>
+
+    <div id="selected-file" style="display:none;margin-top:14px;">
+      <div style="display:flex;align-items:center;gap:12px;background:var(--bg2);
+                  border:1px solid var(--border);border-radius:8px;padding:12px 16px;">
+        <span style="font-size:1.5rem">🖼️</span>
+        <div style="flex:1">
+          <div id="file-name" style="font-weight:600;font-size:.9rem"></div>
+          <div id="file-size" style="font-size:.78rem;color:var(--text-dim)"></div>
+        </div>
+        <button class="btn btn-primary" id="analyze-btn" onclick="startAnalysis()">
+          🔬 Analyse X-Ray
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Error -->
+  <div class="error-box" id="error-box">
+    <h3>⚠️ Analysis Failed</h3>
+    <p id="error-msg"></p>
+  </div>
+
+  <!-- Progress -->
+  <section id="progress-section">
+    <div class="progress-card">
+      <div class="spinner"></div>
+      <h2 style="margin-bottom:8px">Analysing your dental X-ray…</h2>
+      <p style="color:var(--text-dim);font-size:.88rem">
+        Claude Vision AI is examining the panoramic radiograph
+      </p>
+      <div class="progress-steps">
+        <div class="step" id="step-1">
+          <div class="step-dot"></div> Uploading image
+        </div>
+        <div class="step" id="step-2">
+          <div class="step-dot"></div> AI radiograph analysis
+        </div>
+        <div class="step" id="step-3">
+          <div class="step-dot"></div> Generating segmentation
+        </div>
+        <div class="step" id="step-4">
+          <div class="step-dot"></div> Building PDF report
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Results -->
+  <section id="results-section">
+
+    <!-- Action bar -->
+    <div class="section-head" style="margin-bottom:20px;">
+      <div>
+        <h2 style="font-size:1.3rem">Analysis Results</h2>
+        <p style="color:var(--text-dim);font-size:.85rem" id="result-subtitle"></p>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-outline" onclick="resetApp()">↩ New Analysis</button>
+        <a class="btn btn-primary" id="report-link" href="#" target="_blank" download>
+          📄 Download Report
+        </a>
+      </div>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="cards-grid" id="summary-cards"></div>
+
+    <!-- Image panels -->
+    <div class="img-grid">
+      <div class="img-panel">
+        <div class="img-label">🖼️ CLAHE Enhanced</div>
+        <img id="img-enhanced" src="" alt="Enhanced X-ray" />
+      </div>
+      <div class="img-panel">
+        <div class="img-label">🎨 Segmentation Overlay</div>
+        <img id="img-overlay" src="" alt="Segmentation overlay" />
+      </div>
+    </div>
+
+    <!-- FDI chart -->
+    <div class="fdi-panel" id="fdi-chart-panel"></div>
+
+    <!-- Colour legend -->
+    <div class="legend" id="legend"></div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('tab-assessment',this)">Assessment</div>
+      <div class="tab" onclick="switchTab('tab-findings',this)">Tooth Findings</div>
+      <div class="tab" onclick="switchTab('tab-anomalies',this)">Anomalies</div>
+      <div class="tab" onclick="switchTab('tab-implants',this)">Implants</div>
+      <div class="tab" onclick="switchTab('tab-recommendations',this)">Recommendations</div>
+    </div>
+
+    <!-- Tab: Assessment -->
+    <div class="tab-content active" id="tab-assessment">
+      <div class="assessment-block" id="overall-text"></div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;align-items:stretch;">
+
+        <div class="card" id="bone-card">
+          <div class="label">Bone Level</div>
+          <div class="value" id="bone-value" style="font-size:1.2rem;margin:8px 0"></div>
+          <div class="sub" id="bone-concerns"></div>
+        </div>
+
+        <div class="card" id="quality-card">
+          <div class="label">Image Quality</div>
+          <div class="value" id="quality-value" style="font-size:1.2rem;margin:8px 0"></div>
+        </div>
+
+        <div class="card" id="urgency-card">
+          <div class="label">Clinical Urgency</div>
+          <div style="margin-top:8px" id="urgency-badge"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Tab: Findings -->
+    <div class="tab-content" id="tab-findings">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>FDI #</th><th>Status</th><th>Condition</th><th>Bone Loss</th><th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="findings-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab: Anomalies -->
+    <div class="tab-content" id="tab-anomalies">
+      <div class="anomaly-list" id="anomaly-list"></div>
+    </div>
+
+    <!-- Tab: Implants -->
+    <div class="tab-content" id="tab-implants">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>FDI #</th><th>Category</th><th>Confidence</th><th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="implants-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab: Recommendations -->
+    <div class="tab-content" id="tab-recommendations">
+      <ul class="rec-list" id="rec-list"></ul>
+    </div>
+
+  </section>
+</main>
+
+<footer>
+  AI Dental Radiograph Analysis System &nbsp;·&nbsp;
+  <strong>For clinical reference only — not a substitute for professional diagnosis</strong>
+</footer>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+let selectedFile = null;
+
+// ── Drag-and-drop ──────────────────────────────────────────────────────────────
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave',()=> dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f) setFile(f);
+});
+document.getElementById('file-input').addEventListener('change', e => {
+  if (e.target.files[0]) setFile(e.target.files[0]);
+});
+
+function setFile(file) {
+  selectedFile = file;
+  document.getElementById('file-name').textContent = file.name;
+  document.getElementById('file-size').textContent = formatBytes(file.size);
+  document.getElementById('selected-file').style.display = 'block';
+  hideError();
+}
+
+function formatBytes(b) {
+  if (b < 1024)       return b + ' B';
+  if (b < 1048576)    return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(1) + ' MB';
+}
+
+// ── Analysis ──────────────────────────────────────────────────────────────────
+async function startAnalysis() {
+  if (!selectedFile) return;
+  hideError();
+  showSection('progress');
+
+  // Animate steps
+  const stepIds = ['step-1','step-2','step-3','step-4'];
+  const delays  = [0, 800, 3000, 6000];
+  stepIds.forEach((id, i) => {
+    setTimeout(() => {
+      stepIds.slice(0, i).forEach(prev => setStep(prev, 'done'));
+      setStep(id, 'active');
+    }, delays[i]);
+  });
+
+  const fd = new FormData();
+  fd.append('file', selectedFile);
+
+  try {
+    const res  = await fetch('/analyze', { method: 'POST', body: fd });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.detail || 'Unknown server error');
+
+    stepIds.forEach(id => setStep(id, 'done'));
+    await sleep(400);
+    renderResults(data);
+    showSection('results');
+  } catch (err) {
+    showError(err.message);
+    showSection('upload');
+  }
+}
+
+function setStep(id, state) {
+  const el = document.getElementById(id);
+  el.className = 'step ' + state;
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── Render results ─────────────────────────────────────────────────────────────
+function renderResults(data) {
+  const a = data.analysis;
+
+  // Subtitle
+  document.getElementById('result-subtitle').textContent =
+    `Image quality: ${(a.image_quality||'N/A').toUpperCase()}  ·  Urgency: ${(a.urgency||'routine').toUpperCase()}`;
+
+  // Report link
+  const rl = document.getElementById('report-link');
+  rl.href = data.report_url;
+  rl.download = `dental-report-${data.session_id}.pdf`;
+
+  // Images
+  document.getElementById('img-enhanced').src = 'data:image/png;base64,' + data.images.enhanced;
+  document.getElementById('img-overlay').src  = 'data:image/png;base64,' + data.images.overlay;
+
+  // HTML FDI Chart
+  renderFdiChart(a);
+
+  // Summary cards
+  const missing   = (a.missing_teeth || []).length;
+  const impacted  = (a.impacted_teeth || []).length;
+  const anomalies = (a.anomalies || []).length;
+  const present   = (a.tooth_findings || []).filter(f => f.status === 'present').length;
+
+  document.getElementById('summary-cards').innerHTML = `
+    <div class="card ${missing>0?'warning':'success'}">
+      <div class="label">Present Teeth</div>
+      <div class="value" style="color:var(--${missing>0?'text':'success'})">${present}</div>
+      <div class="sub">of 32 adult teeth</div>
+    </div>
+    <div class="card ${missing>0?'warning':''}">
+      <div class="label">Missing / Absent</div>
+      <div class="value" style="color:var(--${missing>0?'warning':'text-dim'})">${missing}</div>
+      <div class="sub">${missing>0 ? (a.missing_teeth||[]).slice(0,4).join(', ')+(missing>4?'…':'') : 'None detected'}</div>
+    </div>
+    <div class="card ${impacted>0?'warning':''}">
+      <div class="label">Impacted Teeth</div>
+      <div class="value" style="color:var(--${impacted>0?'warning':'text-dim'})">${impacted}</div>
+      <div class="sub">${impacted>0 ? (a.impacted_teeth||[]).slice(0,4).join(', ')+(impacted>4?'…':'') : 'None detected'}</div>
+    </div>
+    <div class="card ${anomalies>0?'danger':''}">
+      <div class="label">Anomalies</div>
+      <div class="value" style="color:var(--${anomalies>0?'danger':'text-dim'})">${anomalies}</div>
+      <div class="sub">${anomalies>0?'Require attention':'No anomalies detected'}</div>
+    </div>
+    <div class="card">
+      <div class="label">Implant Cases</div>
+      <div class="value">${(a.implant_classifications||[]).length}</div>
+      <div class="sub">Classified implants</div>
+    </div>
+  `;
+
+  // Legend
+  const LEGEND = [
+    {color:'#4CAF50', label:'Normal'},
+    {color:'#FF9800', label:'Cavity'},
+    {color:'#2196F3', label:'Filling'},
+    {color:'#9C27B0', label:'Crown'},
+    {color:'#00BCD4', label:'Implant'},
+    {color:'#FFEB3B', label:'Root Canal'},
+    {color:'#F44336', label:'Fracture/Lesion'},
+    {color:'#FF9800', label:'Impacted'},
+    {color:'#757575', label:'Missing'},
+    {color:'#E91E63', label:'Supernumerary'},
+  ];
+  document.getElementById('legend').innerHTML = LEGEND.map(l =>
+    `<div class="legend-item">
+      <div class="legend-dot" style="background:${l.color}"></div>${l.label}
+    </div>`
+  ).join('');
+
+  // Assessment tab
+  document.getElementById('overall-text').textContent =
+    a.overall_assessment || 'No assessment available.';
+
+  const bone = a.bone_level_assessment || {};
+  document.getElementById('bone-value').textContent =
+    (bone.overall || 'N/A').replace(/_/g,' ').replace(/\b\w/g, c=>c.toUpperCase());
+  document.getElementById('bone-concerns').textContent =
+    (bone.regions_of_concern || []).join('; ') || 'No specific concerns noted';
+
+  document.getElementById('quality-value').textContent =
+    (a.image_quality || 'N/A').toUpperCase();
+
+  const urgency = (a.urgency || 'routine').toLowerCase();
+  const uClass  = {urgent:'urgency-urgent', soon:'urgency-soon', routine:'urgency-routine'}[urgency] || 'urgency-routine';
+  document.getElementById('urgency-badge').innerHTML =
+    `<span class="pill ${uClass}" style="font-size:.9rem;padding:5px 14px">${urgency.toUpperCase()}</span>`;
+
+  // Findings table
+  const tbody = document.getElementById('findings-tbody');
+  tbody.innerHTML = '';
+  (a.tooth_findings || []).forEach(f => {
+    const cond = (f.condition||'normal').toLowerCase().replace(/ /g,'_');
+    const stat = (f.status||'present').toLowerCase();
+    tbody.innerHTML += `
+      <tr>
+        <td><strong>${f.fdi_number}</strong></td>
+        <td><span class="pill ${stat==='present'?'pill-present':'pill-missing2'}">${f.status||'—'}</span></td>
+        <td><span class="pill pill-${cond.replace(/_/g,'_')}">${(f.condition||'normal').replace(/_/g,' ')}</span></td>
+        <td class="severity-${(f.bone_loss||'none').toLowerCase()}">${f.bone_loss||'none'}</td>
+        <td style="color:var(--text-dim);font-size:.82rem">${f.notes||'—'}</td>
+      </tr>`;
+  });
+  if (!a.tooth_findings?.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:24px">No individual findings available</td></tr>';
+  }
+
+  // Anomalies
+  const al = document.getElementById('anomaly-list');
+  al.innerHTML = '';
+  (a.anomalies || []).forEach(an => {
+    const sev = (an.severity||'').toLowerCase();
+    al.innerHTML += `
+      <div class="anomaly-card">
+        <div class="an-head">
+          <span class="an-type">${(an.type||'').replace(/_/g,' ')}</span>
+          <span class="pill pill-fractured severity-${sev}">${sev}</span>
+          <span class="an-location">${an.location||''}</span>
+          ${(an.fdi_region||[]).length?`<span style="font-size:.78rem;color:var(--text-dim)">FDI: ${an.fdi_region.join(', ')}</span>`:''}
+        </div>
+        <div class="an-desc">${an.description||''}</div>
+      </div>`;
+  });
+  if (!a.anomalies?.length) {
+    al.innerHTML = '<div style="color:var(--text-dim);padding:16px;text-align:center">No structural anomalies detected</div>';
+  }
+
+  // Implants table
+  const itbody = document.getElementById('implants-tbody');
+  itbody.innerHTML = '';
+  (a.implant_classifications || []).forEach(im => {
+    itbody.innerHTML += `
+      <tr>
+        <td><strong>${im.fdi_number}</strong></td>
+        <td><span class="pill pill-implant">${im.category||'—'}</span></td>
+        <td><span class="pill pill-${(im.confidence||'low')}"
+          style="background:var(--bg3);color:var(--text-dim);border:1px solid var(--border)">
+          ${im.confidence||'—'}</span></td>
+        <td style="color:var(--text-dim);font-size:.82rem">${im.notes||'—'}</td>
+      </tr>`;
+  });
+  if (!a.implant_classifications?.length) {
+    itbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:24px">No implants detected</td></tr>';
+  }
+
+  // Recommendations
+  const rl2 = document.getElementById('rec-list');
+  rl2.innerHTML = (a.recommendations || []).map(r => `<li>${r}</li>`).join('') ||
+    '<li>Please consult a qualified dental professional for clinical evaluation.</li>';
+}
+
+// ── FDI HTML Chart ────────────────────────────────────────────────────────────
+function renderFdiChart(a) {
+  const COLORS = {
+    normal:'#3a7d44', cavity:'#e67e22', filling:'#2980b9',
+    crown:'#8e44ad', implant:'#16a085', root_canal:'#d4ac0d',
+    fractured:'#c0392b', periapical_lesion:'#922b21',
+    bridge:'#7f8c8d', missing:'#2c3e50', impacted:'#d35400',
+    supernumerary:'#c2185b',
+  };
+  const DEFAULT_COLOR = '#2c3e50';
+
+  const findings    = {};
+  (a.tooth_findings || []).forEach(f => findings[f.fdi_number] = f);
+  const missingSet  = new Set(a.missing_teeth  || []);
+  const impactedSet = new Set(a.impacted_teeth || []);
+  const superSet    = new Set(a.supernumerary_teeth || []);
+
+  function getColor(fdi) {
+    if (missingSet.has(fdi))  return COLORS.missing;
+    if (impactedSet.has(fdi)) return COLORS.impacted;
+    if (superSet.has(fdi))    return COLORS.supernumerary;
+    if (findings[fdi])        return COLORS[findings[fdi].condition] || COLORS.normal;
+    return DEFAULT_COLOR;
+  }
+
+  function getTooltip(fdi) {
+    if (missingSet.has(fdi))  return `FDI ${fdi}: Missing`;
+    if (impactedSet.has(fdi)) return `FDI ${fdi}: Impacted`;
+    if (findings[fdi]) {
+      const f = findings[fdi];
+      return `FDI ${fdi}: ${(f.condition||'normal').replace(/_/g,' ')} — ${f.notes||''}`;
+    }
+    return `FDI ${fdi}: Normal`;
+  }
+
+  function toothCell(fdi) {
+    const color = getColor(fdi);
+    const tip   = getTooltip(fdi);
+    return `<div class="fdi-tooth" style="background:${color}" title="${tip}">${fdi}</div>`;
+  }
+
+  // Upper: Q2 (28→21) + Q1 (11→18) — left half then right half
+  const upperLeft  = [28,27,26,25,24,23,22,21];
+  const upperRight = [11,12,13,14,15,16,17,18];
+  // Lower: Q3 (38→31) + Q4 (41→48)
+  const lowerLeft  = [38,37,36,35,34,33,32,31];
+  const lowerRight = [41,42,43,44,45,46,47,48];
+
+  const upperCells = [...upperLeft, ...upperRight].map(toothCell).join('');
+  const lowerCells = [...lowerLeft, ...lowerRight].map(toothCell).join('');
+
+  document.getElementById('fdi-chart-panel').innerHTML = `
+    <div class="fdi-chart-wrap">
+      <div class="fdi-chart-title">🦷 FDI Tooth Chart <span style="font-weight:400;margin-left:6px;color:var(--text-dim)">(colour = condition · hover for details)</span></div>
+      <div class="fdi-chart-body">
+
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px">
+          <div style="width:64px;flex-shrink:0"></div>
+          <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;font-size:.68rem;color:#484f58;text-align:center">
+            <span style="padding:0 6px;border-right:1px dashed #30363D">◀ Patient's Left (Q2/Q3)</span>
+            <span style="padding:0 6px">Patient's Right (Q1/Q4) ▶</span>
+          </div>
+        </div>
+
+        <div class="fdi-row-wrap">
+          <div class="fdi-jaw-label">UPPER<br>JAW</div>
+          <div class="fdi-teeth-row">${upperCells}</div>
+        </div>
+
+        <div class="fdi-midline">
+          <div class="fdi-midline-label"></div>
+          <div style="flex:1;position:relative;height:18px;">
+            <div style="position:absolute;top:50%;left:0;right:0;border-top:1px dashed #30363D;"></div>
+            <div style="position:absolute;top:0;bottom:0;left:50%;border-left:1px dashed #30363D;"></div>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+                        background:var(--bg2);padding:0 8px;font-size:.65rem;color:#484f58;white-space:nowrap">
+              — MIDLINE —
+            </div>
+          </div>
+        </div>
+
+        <div class="fdi-row-wrap">
+          <div class="fdi-jaw-label">LOWER<br>JAW</div>
+          <div class="fdi-teeth-row">${lowerCells}</div>
+        </div>
+
+      </div>
+    </div>`;
+}
+
+// ── Tab switching ──────────────────────────────────────────────────────────────
+function switchTab(id, el) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
+
+// ── Visibility helpers ────────────────────────────────────────────────────────
+function showSection(name) {
+  document.getElementById('upload-section').style.display   = name==='upload'   ? 'block' : 'none';
+  document.getElementById('progress-section').style.display = name==='progress' ? 'block' : 'none';
+  document.getElementById('results-section').style.display  = name==='results'  ? 'block' : 'none';
+}
+
+function showError(msg) {
+  const b = document.getElementById('error-box');
+  document.getElementById('error-msg').textContent = msg;
+  b.style.display = 'block';
+}
+function hideError() {
+  document.getElementById('error-box').style.display = 'none';
+}
+
+function resetApp() {
+  selectedFile = null;
+  document.getElementById('file-input').value = '';
+  document.getElementById('selected-file').style.display = 'none';
+  hideError();
+  showSection('upload');
+}
+
+// Initial state
+showSection('upload');
+</script>
+</body>
+</html>
