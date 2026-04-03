@@ -42,8 +42,9 @@ venv.bak/
 *~
 .DS_Store
 
-# Uploads only (results and models are now tracked)
+# Uploads and Results (models are tracked)
 backend/uploads/
+backend/results/
 
 # Logs
 *.log
