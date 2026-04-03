@@ -15,18 +15,12 @@ from fastapi.responses import FileResponse, JSONResponse
 
 from processor import DentalImageProcessor
 from reporter import DentalReportGenerator
-
-# Use local model if trained, otherwise fall back to Gemini API
-_MODEL_PATH = Path(__file__).parent / "models" / "efficientnet_dental.pth"
-if _MODEL_PATH.exists():
-    from local_analyzer import LocalDentalAnalyzer as _Analyzer
-else:
-    from analyzer import DentalAnalyzer as _Analyzer
+from local_analyzer import LocalDentalAnalyzer
 
 # ── App ────────────────────────────────────────────────────────────────────────
 app = FastAPI(
     title="AI Dental Radiograph Analysis System",
-    description="Analyzes panoramic dental X-rays (OPG) using Claude Vision AI",
+    description="Analyzes panoramic dental X-rays (OPG) using EfficientNet deep learning model",
     version="1.0.0",
 )
 
@@ -50,7 +44,7 @@ RESULTS_DIR.mkdir(exist_ok=True)
 app.mount("/results", StaticFiles(directory=str(RESULTS_DIR)), name="results")
 
 # ── Services ───────────────────────────────────────────────────────────────────
-analyzer  = _Analyzer()
+analyzer  = LocalDentalAnalyzer()
 processor = DentalImageProcessor()
 reporter  = DentalReportGenerator()
 
@@ -89,7 +83,7 @@ async def analyze_xray(file: UploadFile = File(...)):
         with open(image_path, "wb") as f:
             shutil.copyfileobj(file.file, f)
 
-        # 1 — Analyse with Claude Vision AI
+        # 1 — Analyse with EfficientNet model
         analysis = analyzer.analyze(str(image_path))
 
         # 2 — Create colour-coded segmentation overlay + FDI chart

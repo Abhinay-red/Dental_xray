@@ -46,6 +46,9 @@ venv.bak/
 backend/uploads/
 backend/results/
 
+# No longer needed - removed Gemini API integration
+backend/.env
+
 # Logs
 *.log
 logs/

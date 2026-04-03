@@ -1,22 +1,20 @@
 # Dental AI - Radiograph Analysis System
 
-An AI-powered dental radiograph analysis system that uses Google Gemini AI and local deep learning models to analyze dental X-rays.
+An AI-powered dental radiograph analysis system that uses EfficientNet deep learning model to analyze dental X-rays.
 
 ## Features
 
-- Dental radiograph upload and analysis
-- Dual analysis modes:
-  - Google Gemini AI API integration
-  - Local EfficientNet-based model
-- Automated report generation
-- Modern web interface
+- 🦷 Dental radiograph upload and analysis
+- 🤖 EfficientNet-based deep learning model
+- 📊 Automated report generation
+- 🖥️ Modern web interface
 
 ## Technology Stack
 
 ### Backend
 
 - **Framework:** FastAPI
-- **AI/ML:** Google Gemini API, PyTorch, TorchVision
+- **AI/ML:** PyTorch, TorchVision, EfficientNet
 - **Image Processing:** OpenCV, Pillow
 - **Report Generation:** ReportLab
 
@@ -35,7 +33,7 @@ An AI-powered dental radiograph analysis system that uses Google Gemini AI and l
 1. **Clone the repository**
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/Abhinay-red/Dental_xray
    cd dental-ai
    ```
 
@@ -48,20 +46,13 @@ An AI-powered dental radiograph analysis system that uses Google Gemini AI and l
    pip install -r requirements.txt
    ```
 
-3. **Configure environment variables**
-
-   ```bash
-   cp .env.example .env
-   # Edit .env and add your GEMINI_API_KEY
-   ```
-
-4. **Run the backend server**
+3. **Run the backend server**
 
    ```bash
    python main.py
    ```
 
-5. **Open the frontend**
+4. **Open the frontend**
    - Open `frontend/index.html` in your browser
    - Or serve it using a local web server
 
@@ -71,20 +62,18 @@ An AI-powered dental radiograph analysis system that uses Google Gemini AI and l
 dental-ai/
 ├── backend/
 │   ├── main.py              # FastAPI server entry point
-│   ├── analyzer.py          # Gemini AI integration
-│   ├── local_analyzer.py    # Local model implementation
+│   ├── local_analyzer.py    # EfficientNet model implementation
 │   ├── processor.py         # Image processing utilities
 │   ├── reporter.py          # Report generation
 │   ├── train.py             # Model training script
 │   ├── requirements.txt     # Python dependencies
-│   ├── .env.example         # Environment variables template
 │   ├── models/              # Trained models directory
-│   ├── uploads/             # Uploaded images
-│   └── results/             # Analysis results
+│   ├── uploads/             # Uploaded images (runtime)
+│   └── results/             # Analysis results (runtime)
 └── frontend/
     └── index.html           # Web interface
-
 ```
+
 ## Author
 
 Abhinay Reddy
