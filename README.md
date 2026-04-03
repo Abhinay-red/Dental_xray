@@ -4,12 +4,12 @@ An AI-powered dental radiograph analysis system that uses Google Gemini AI and l
 
 ## Features
 
-- 🦷 Dental radiograph upload and analysis
-- 🤖 Dual analysis modes:
+- Dental radiograph upload and analysis
+- Dual analysis modes:
   - Google Gemini AI API integration
   - Local EfficientNet-based model
-- 📊 Automated report generation
-- 🖥️ Modern web interface
+- Automated report generation
+- Modern web interface
 
 ## Technology Stack
 
@@ -29,7 +29,6 @@ An AI-powered dental radiograph analysis system that uses Google Gemini AI and l
 ### Prerequisites
 
 - Python 3.8+
-- Google Gemini API key ([Get one here](https://makersuite.google.com/app/apikey))
 
 ### Installation
 
@@ -86,15 +85,6 @@ dental-ai/
     └── index.html           # Web interface
 
 ```
+Author
 
-## Security Notes
-
-⚠️ **Important:** Never commit `.env` files or API keys to version control. Always use `.env.example` as a template.
-
-## License
-
-[Add your license here]
-
-## Contributing
-
-[Add contribution guidelines here]
+Abhinay Reddy
