@@ -42,17 +42,8 @@ venv.bak/
 *~
 .DS_Store
 
-# Model files (large files)
-*.h5
-*.pkl
-*.pth
-*.onnx
-backend/models/*.pth
-backend/models/*.h5
-
-# Uploads and Results
+# Uploads only (results and models are now tracked)
 backend/uploads/
-backend/results/
 
 # Logs
 *.log
